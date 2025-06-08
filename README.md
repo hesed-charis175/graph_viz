@@ -1,6 +1,5 @@
 # Graph Visualizer
 
-## Overview
 Graph Visualizer is a real-time visualization tool built in C++ with ImGui, designed to help users interactively explore graph structures, modify parameters, and test pathfinding algorithms. It provides a map-based interface where users can adjust the nature of node connectivity, set start and end points, and analyze algorithm performance.
 
 ## Features
