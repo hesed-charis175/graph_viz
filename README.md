@@ -30,5 +30,5 @@ Graph Visualizer is a real-time visualization tool built in C++ with ImGui, desi
 ## Installation and Usage
 1. Clone the repository  
    ```sh
-   git clone https://github.com/yourusername/graph-visualizer.git
+   git clone https://github.com/hesed-charis175/graph_viz.git
    cd graph-visualizer
