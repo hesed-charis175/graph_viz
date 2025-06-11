@@ -55,4 +55,3 @@ Here are the requirements and how to install them (Debian-based/Ubuntu):
 3. Run the Application
    ```sh
    ./graph_viewer
-   ```sh
