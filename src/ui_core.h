@@ -1,7 +1,7 @@
 #include "imgui.h"
 #include "config.h"
 #include <iostream>
-#include "namespace.h"
+#include "global.h"
 #include <string>
 #include <chrono>
 #include <deque>
