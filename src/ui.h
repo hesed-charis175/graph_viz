@@ -321,7 +321,7 @@ static void showNodeEditor(WindowData* winData, Node* editableNode, bool editabl
     ImGui::SeparatorText("Node Type");
 
     const char* nodeTypes[] = {"- Default", "Start", "Intermediate", "End"};
-    static int currentType = static_cast<int>(editableNode->getNodeType());
+    int currentType = static_cast<int>(editableNode->getNodeType());
     std::cout << currentType << std::endl;
 
     ImGui::ListBox("Node Type", &currentType, nodeTypes, IM_ARRAYSIZE(nodeTypes), 4);
@@ -390,7 +390,7 @@ static void showNodeEditor(WindowData* winData, Node* editableNode, bool editabl
             s_CopiedOnceFlag = false;
         }
         ImGui::CloseCurrentPopup();
-        if(!editable) editableNode->~Node();
+        if(!editable) *editableNode = Node();
     }
     ImGui::SameLine();
     if(!editable){
@@ -426,9 +426,11 @@ static void handleClickInViewport(WindowData* winData){
         winData->editableNode = false;
         s_tempNode.position.x = cursorPosition.x - origin.x;
         s_tempNode.position.y = cursorPosition.y - origin.y;
-
+        
         if(!s_targetEditable){
+            
             s_targetEditable = s_Graph.getNodeAt(s_tempNode.position);
+            s_tempNode.setNodeType(NodeType::None);
         }
         if(s_targetEditable){ 
             // std::cout << "[DEBUG] Found Node : ";
