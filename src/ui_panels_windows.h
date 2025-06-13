@@ -19,6 +19,18 @@ static void ShowMenuFile()
     if (ImGui::MenuItem("Quit", "Alt+F4")) {}
 }
 
+static void HelpMarker(const char* desc)
+{
+    ImGui::TextDisabled("(?)");
+    if (ImGui::BeginItemTooltip())
+    {
+        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+        ImGui::TextUnformatted(desc);
+        ImGui::PopTextWrapPos();
+        ImGui::EndTooltip();
+    }
+}
+
 static void showAppMainMenuBar(WindowData* winData)
 {
     if (ImGui::BeginMainMenuBar())
@@ -195,10 +207,13 @@ void showStyleEditor(WindowData* winData){
     ImGui::End();
 }
 
+
 static void showNodeEditor(WindowData* winData, Node* editableNode, bool editable){
     if (editable && !s_CopiedOnceFlag) {
         s_copiedNode.position = editableNode->position;
         s_copiedNode.setNodeType(editableNode->getNodeType());
+        if(s_Graph.end) s_localGrEnd = *s_Graph.end;
+        if(s_Graph.start) s_localGrStart = *s_Graph.start;
         s_CopiedOnceFlag = true;
     }
     if(winData->editableNode && Config::allowNodeDragging){
@@ -212,7 +227,6 @@ static void showNodeEditor(WindowData* winData, Node* editableNode, bool editabl
 
     const char* nodeTypes[] = {"- Default", "Start", "Intermediate", "End"};
     int currentType = static_cast<int>(editableNode->getNodeType());
-    std::cout << currentType << std::endl;
 
     ImGui::ListBox("Node Type", &currentType, nodeTypes, IM_ARRAYSIZE(nodeTypes), 4);
     ImGui::SameLine();
@@ -236,25 +250,28 @@ static void showNodeEditor(WindowData* winData, Node* editableNode, bool editabl
     editableNode->position.x = static_cast<float>(_x);
     editableNode->position.y = static_cast<float>(_y);
 
-    // s_copiedNode.print();
-
+    NodeType type;
     ImVec4 tmpNodeColor;
     switch(currentType){
         case 0:
             tmpNodeColor = Config::s_nodeColor;
             editableNode->setNodeType(NodeType::None);
+            type = NodeType::None;
             break;
         case 1: 
             tmpNodeColor = Config::s_startColor;
             editableNode->setNodeType(NodeType::Start);
+            type = NodeType::Start;
             break;
         case 2:
             tmpNodeColor = Config::s_intermediateColor;
             editableNode->setNodeType(NodeType::Intermediate);
+            type = NodeType::Intermediate;
             break;
         case 3:
             tmpNodeColor = Config::s_endColor;
             editableNode->setNodeType(NodeType::End);
+            type = NodeType::End;
             break;
  
     }
@@ -271,8 +288,22 @@ static void showNodeEditor(WindowData* winData, Node* editableNode, bool editabl
         }
     }
 
+
+
+    // Segmentation fault (core dumped) comes from here. I should probably find a way to handle this... What causes it.
     if(ImGui::Button("Cancel")){
         if(editable){
+            // s_localGrEnd->setNodeType(NodeType::End);
+            // s_Graph.setNodeType(&s_localGrStart, NodeType::Start);
+            // s_localGrStart.setNodeType(NodeType::Start);
+            
+            // s_localGrStart.print();
+
+            //////////////////////////////////////////////////////////////////////////////////////////
+            ///////// Segmentation fault probablycomes from the the fact i am trying to allocate a node type to a nullptr.
+
+
+
             s_targetEditable = nullptr;
             // editableNode->print();
             *editableNode = s_copiedNode;
@@ -292,6 +323,7 @@ static void showNodeEditor(WindowData* winData, Node* editableNode, bool editabl
         }
     }else{
         if(ImGui::Button("Edit")){
+            s_Graph.setNodeType(editableNode, type);
             s_targetEditable = nullptr;
             ImGui::CloseCurrentPopup();
             winData->editableNode = false;
@@ -418,7 +450,7 @@ void showConfigPanelFull(bool* p_open)
 
 
     const ImGuiViewport* mainViewport = ImGui::GetMainViewport();
-    ImGui::SetNextWindowPos(ImVec2(mainViewport->WorkPos.x + 20, mainViewport->WorkPos.y + 20), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowPos(ImVec2(mainViewport->WorkPos.x + 20, mainViewport->WorkPos.y + 20), ImGuiCond_Once);
     ImGui::SetNextWindowSize(ImVec2(550, 680), ImGuiCond_FirstUseEver);
 
     if(!ImGui::Begin("Configuration Panel", NULL, ImGuiWindowFlags_MenuBar)){
@@ -445,5 +477,3 @@ void showConfigPanelFull(bool* p_open)
 
     ImGui::End();
 }
-
-
