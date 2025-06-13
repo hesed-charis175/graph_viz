@@ -1,26 +1,3 @@
-static void updateNodes(WindowData* winData){
-    for(auto node : s_Graph.nodes){
-        ImVec4 tmpNodeColor;
-        switch(node.getNodeType()){
-            case NodeType::Start: 
-                tmpNodeColor = Config::s_startColor;
-                break;
-            case NodeType::Intermediate:
-                tmpNodeColor = Config::s_intermediateColor;
-                break;
-            case NodeType::End:
-                tmpNodeColor = Config::s_endColor;
-                break;
-            default:
-                tmpNodeColor = Config::s_nodeColor;
-                break;
-        }
-        if (node.position.x >= 0 && node.position.y >= 0) {
-            drawNode(node, tmpNodeColor);
-        }
-    }
-}
-
 void drawNode(Node node, ImVec4& color, bool outline = false){
     ImDrawList* drawList = ImGui::GetBackgroundDrawList();
     ImVec2 origin = ImGui::GetMainViewport()->Pos;
@@ -54,6 +31,30 @@ void drawNode(Node node, ImVec4& color, bool outline = false){
     }
 }
 
+static void updateNodes(WindowData* winData){
+    for(auto node : s_Graph.nodes){
+        ImVec4 tmpNodeColor;
+        switch(node.getNodeType()){
+            case NodeType::Start: 
+                tmpNodeColor = Config::s_startColor;
+                break;
+            case NodeType::Intermediate:
+                tmpNodeColor = Config::s_intermediateColor;
+                break;
+            case NodeType::End:
+                tmpNodeColor = Config::s_endColor;
+                break;
+            default:
+                tmpNodeColor = Config::s_nodeColor;
+                break;
+        }
+        if (node.position.x >= 0 && node.position.y >= 0) {
+            drawNode(node, tmpNodeColor);
+        }
+    }
+
+    if(s_Graph.start) s_Graph.start->print();
+}
 static void handleClickInViewport(WindowData* winData){
 
     ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -72,12 +73,10 @@ static void handleClickInViewport(WindowData* winData){
         
         if(!s_targetEditable){
             
-            s_targetEditable = s_Graph.getNodeAt(s_tempNode.position);
+            s_targetEditable = s_Graph.getNodeAt(s_tempNode.position, Config::selectionRadius);
             s_tempNode.setNodeType(NodeType::None);
         }
         if(s_targetEditable){ 
-            // std::cout << "[DEBUG] Found Node : ";
-            // s_targetEditable->print();
             winData->editableNode = true;
             s_selectedNodes.clear();
             s_selectedNodes.push_back(s_targetEditable);
@@ -93,5 +92,18 @@ static void handleClickInViewport(WindowData* winData){
         : showNodeEditor(winData, &s_tempNode, false);
         ImGui::EndPopup();
     }
+
+    bool isPopupOpenNow = ImGui::IsPopupOpen("Node Editor");
+
+    if(s_WasPopupOpen && !isPopupOpenNow){
+        if(winData->editableNode){
+            *s_targetEditable = s_copiedNode;
+            winData->editableNode = false;
+            s_targetEditable = nullptr;
+            s_CopiedOnceFlag = false;
+        }
+    }
+
+    s_WasPopupOpen = isPopupOpenNow;
 
 }
