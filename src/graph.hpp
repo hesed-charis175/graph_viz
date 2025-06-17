@@ -68,23 +68,27 @@ struct Graph{
         if(!node) return;
 
         if(type == NodeType::Start){
-            if(start) setNodeType(start, NodeType::None);
+            if(start && start != node) setNodeType(start, NodeType::None);
             start = node;
+            if (node == end) end = nullptr;
         }
 
         else if(type == NodeType::End){
-            if(end) setNodeType(end, NodeType::Intermediate);
+            if(end && end != node) setNodeType(end, NodeType::None);
             end = node;
+            if (node == start) start = nullptr;
         }
 
         else if(type == NodeType::Intermediate){
-            intermediateNodes.push_back(node);
+            if(std::find(intermediateNodes.begin(), intermediateNodes.end(), node) == intermediateNodes.end()) intermediateNodes.push_back(node);
         }
 
         else{
             intermediateNodes.erase(std::remove(
                 intermediateNodes.begin(), intermediateNodes.end(), node
             ), intermediateNodes.end());
+            if (node == start) start = nullptr;
+            if (node == end) end = nullptr; 
         }
 
         node->setNodeType(type);
@@ -128,6 +132,10 @@ struct Graph{
         if(_nodeIt != nodes.end()){
             nodes.erase(_nodeIt, nodes.end());
         }
+
+        if(nodeToRemove == start) start = nullptr;
+        if(nodeToRemove == end) end = nullptr;
+        intermediateNodes.erase(std::remove(intermediateNodes.begin(), intermediateNodes.end(), nodeToRemove), intermediateNodes.end());
     }
 
     void resetNodeRoles(){
@@ -141,5 +149,30 @@ struct Graph{
             return (n.position - _position).length() <= nodeSize + selectionRadius;
         });
         return (_node != nodes.end()) ? &(*_node) : nullptr;
+    }
+
+    void enforceNodeTypeConsistency() {
+        for (auto& node : nodes) {
+            if (&node == start) {
+                if (!node.isStart) node.setNodeType(NodeType::Start);
+            } else if (node.isStart) {
+                node.setNodeType(NodeType::None);
+            }
+        }
+        for (auto& node : nodes) {
+            if (&node == end) {
+                if (!node.isEnd) node.setNodeType(NodeType::End);
+            } else if (node.isEnd) {
+                node.setNodeType(NodeType::None);
+            }
+        }
+        for (auto& node : nodes) {
+            bool isIntermediate = std::find(intermediateNodes.begin(), intermediateNodes.end(), &node) != intermediateNodes.end();
+            if (isIntermediate) {
+                if (!node.isIntermediate) node.setNodeType(NodeType::Intermediate);
+            } else if (node.isIntermediate) {
+                node.setNodeType(NodeType::None);
+            }
+        }
     }
 };
