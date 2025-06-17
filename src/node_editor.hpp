@@ -81,6 +81,7 @@ static void showNodeEditor(WindowData* winData, Node* editableNode, bool editabl
             *editableNode = s_copiedNode;
             winData->editableNode = false;
             s_CopiedOnceFlag = false;
+            editableNode = nullptr;
         }
         ImGui::CloseCurrentPopup();
         if(!editable) *editableNode = Node();
@@ -88,15 +89,14 @@ static void showNodeEditor(WindowData* winData, Node* editableNode, bool editabl
     ImGui::SameLine();
     if(!editable){
         if(ImGui::Button("Add Node")){
-            for(auto node : s_Graph.nodes){
-                node.print();
-            }
-            s_Graph.addNode(editableNode);
-            editableNode->setNodeType(type);
+            editableNode->setNodeType(NodeType::None);
+            s_Graph.addNode(*editableNode);
             s_Graph.setNodeType(&s_Graph.nodes.back(), type);
-            editableNode->~Node();
+            s_Graph.enforceNodeTypeConsistency();
+            
             winData->editableNode = false;
             ImGui::CloseCurrentPopup();
+            editableNode = nullptr;
         }
     }else{
         if(ImGui::Button("Edit")){
@@ -105,6 +105,8 @@ static void showNodeEditor(WindowData* winData, Node* editableNode, bool editabl
             ImGui::CloseCurrentPopup();
             winData->editableNode = false;
             s_CopiedOnceFlag = false;
+            editableNode = nullptr;
+
         }
     }
 
