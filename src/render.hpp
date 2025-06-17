@@ -14,6 +14,7 @@ static void showWindowMenuBar(WindowData* winData)
         {
             if ( ImGui::MenuItem("Metrics/Debugger", NULL, &winData->showMetrics, true)) {}
             if ( ImGui::MenuItem("Log Window")) {}
+            if ( ImGui::MenuItem("Node Debug List", NULL, &winData->showNodeDebugList, true)) {}
             if (ImGui::MenuItem("About"))
             {
                 winData->showAbout = true;
@@ -33,7 +34,7 @@ void graphVisualizerRender(bool* p_open){
     if(s_winData.showAbout) showAbout(&s_winData);
     if (s_winData.evaluateClick) handleClickInViewport(&s_winData);
     if (s_winData.updateNodes) updateNodes(&s_winData);
-
+    if (s_winData.showNodeDebugList) showDebugNodeList(&s_winData);
 
     
     const ImGuiViewport* mainViewport = ImGui::GetMainViewport();
