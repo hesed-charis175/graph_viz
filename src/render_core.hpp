@@ -15,6 +15,7 @@ struct WindowData{
     bool showNodeEditor = false;
     bool evaluateClick = true;
     bool updateNodes = true;
+    bool showNodeDebugList = false;
     bool editableNode = false;
 };
 
