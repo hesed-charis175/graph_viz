@@ -30,6 +30,67 @@ static void updateKeyBuffer(){
     }
 }
 
+
+
+enum class DebugPosition {TopLeft, TopRight, BottomLeft, BottomRight};
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+// DebugPosition will be used later in the settings to position the node debug list overlay //
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+static void showDebugNodeList(WindowData* winData){
+    static int location = 1;
+
+    ImGuiWindowFlags winFlags = ImGuiWindowFlags_NoDecoration | 
+    ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize | 
+    ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+
+    const float PAD = 10.0f;
+    const ImGuiViewport* viewport = ImGui::GetMainViewport();
+    ImVec2 work_pos = viewport->WorkPos;
+    ImVec2 work_size = viewport->WorkSize;
+    ImVec2 window_pos, window_pos_pivot;
+    window_pos.x = (location & 1) ? (work_pos.x + work_size.x - PAD) : (work_pos.x + PAD);
+    window_pos.y = (location & 2) ? (work_pos.y + work_size.y - PAD) : (work_pos.y + PAD);
+    window_pos_pivot.x = (location & 1) ? 1.0f : 0.0f;
+    window_pos_pivot.y = (location & 2) ? 1.0f : 0.0f;
+    ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
+    ImGui::SetNextWindowViewport(viewport->ID);
+    winFlags |= ImGuiWindowFlags_NoMove;
+
+    ImGui::SetNextWindowBgAlpha(0.35f);
+
+    ImVec2 minSize(0, 0);
+    ImVec2 maxSize(400, 300);
+    ImGui::SetNextWindowSizeConstraints(minSize, maxSize);
+
+    if (ImGui::Begin("Node Debug List", &winData->showAppSimpleOverlay, winFlags))
+    {
+        ImGui::Text("Node Debug List");
+        ImGui::Separator();
+
+        for(auto node : s_Graph.nodes){
+            bool isBeingEdited = false;
+            if(winData->editableNode && &node == s_targetEditable) isBeingEdited = true;
+            ImGui::Text("[NODE] : Position(%.2f, %.2f) | Type(%s)", node.position.x, node.position.y, node.debugNodeTypeString.c_str());
+            if(isBeingEdited) {
+                ImGui::SameLine();
+                ImGui::Text("<Edit Mode>");
+            }
+            ImGui::Separator();
+        }
+
+        if(winData->editableNode){
+            ImGui::Spacing();
+            ImGui::Separator();
+            ImGui::Text("<Edit Mode>");
+        }
+    }
+    ImGui::End();
+
+}
+
+
 static void showAppSimpleOverlay(WindowData* winData) {
     static int location = 0;
 
