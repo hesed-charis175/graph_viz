@@ -26,7 +26,9 @@ static void drawNode(Node node, ImVec4& color, bool outline = false){
             ("(" + std::to_string((int)node.position.x) + ", " + std::to_string((int)node.position.y) + ")").c_str());
         }
         
-        drawList->AddCircle(pos, Config::nodeSize + Config::edgeThickness, ImGui::ColorConvertFloat4ToU32(Config::s_edgeColor));
+        if(Config::hasOutline){
+            drawList->AddCircle(pos, Config::nodeSize + Config::edgeThickness, ImGui::ColorConvertFloat4ToU32(Config::s_edgeColor));
+        }
         
         for(int i = 0; i < Config::glowNodeIterations; i++){
             float glowRadius = Config::nodeSize + i * Config::glowNodeFactor;
@@ -44,7 +46,6 @@ static void drawNode(Node node, ImVec4& color, bool outline = false){
 static void updateNodes(WindowData* winData){
     for(auto node : s_Graph.nodes){
         ImVec4 tmpNodeColor;
-        std::cout << "[DEBUG]" << node.debugNodeTypeString << std::endl;
         switch(node.getNodeType()){
             case NodeType::Start: 
                 tmpNodeColor = Config::s_startColor;
