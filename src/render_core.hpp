@@ -1,8 +1,12 @@
 #include "config.hpp"
 #include "graph_inst.hpp"
 #include <chrono>
+#include <sstream>
+#include <iomanip>
+#include <unordered_set>
 #include <deque>
 #include "utilities.hpp"
+#include <cstdio>
 
 #define IM_MIN(A, B)            (((A) < (B)) ? (A) : (B))
 
@@ -17,6 +21,7 @@ struct WindowData{
     bool updateNodes = true;
     bool showNodeDebugList = false;
     bool editableNode = false;
+    bool showDebugLogs = false;
 };
 
 static WindowData s_winData;
