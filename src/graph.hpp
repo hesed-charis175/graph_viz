@@ -3,6 +3,11 @@
 #include <iostream>
 #include "matvec.hpp"
 #include <string>
+#include <cassert>
+#include <cstdint>
+
+
+static std::string s_toLog;
 
 
 enum GraphType { City, Island, Maze };
@@ -10,6 +15,8 @@ enum class NodeType{ None, Start, Intermediate, End };
 
 
 struct Node{
+    static size_t global_id_counter;
+    size_t node_id;
     Vec2 position;
     bool isIntermediate = false;
     bool isStart = false;
@@ -41,7 +48,7 @@ struct Node{
     }
 };
 
-
+size_t Node::global_id_counter = 0;
 
 struct Graph{
  public:
@@ -65,6 +72,7 @@ struct Graph{
         
     }
     void setNodeType(Node* node, NodeType type){
+        assert(isNodePtrValid(node) && "Node* must be in graph when setting type!");
         if(!node) return;
 
         if(type == NodeType::Start){
@@ -92,11 +100,18 @@ struct Graph{
         }
 
         node->setNodeType(type);
+
+        s_toLog += "[DEBUG] setNodeType: " + std::to_string(reinterpret_cast<uintptr_t>(node)) + "[id=" + std::to_string(node->node_id) +"] set to " + std::to_string(static_cast<int>(type)) + "\n";
+        debugPrintState();
     }
     void addNode(const Node& copyNode){
-        nodes.emplace_back(copyNode);
-        setNodeType(&nodes.back(), copyNode.getNodeType());
-    }
+    nodes.emplace_back(copyNode);
+    s_toLog += "[DEBUG] addNode: Added node " + std::to_string(reinterpret_cast<uintptr_t>(&nodes.back())) 
+           + " [id=" + std::to_string(nodes.back().node_id) + "] from copyNode " + std::to_string(reinterpret_cast<uintptr_t>(&copyNode)) + " [id=" + std::to_string(copyNode.node_id) + "] (type: " 
+           + copyNode.debugNodeTypeString + ")\n";
+    setNodeType(&nodes.back(), copyNode.getNodeType());
+    debugPrintState();
+}
     void addNode(float x, float y, NodeType type = NodeType::None){
         nodes.emplace_back(x, y);
         setNodeType(&nodes.back(), type);
@@ -175,4 +190,39 @@ struct Graph{
             }
         }
     }
+    bool isNodePtrValid(Node* ptr) const {
+    for (const auto& node : nodes) {
+        if (&node == ptr) return true;
+    }
+    return false;
+}
+
+void debugPrintState() const {
+    s_toLog += "----- GRAPH STATE -----\n";
+s_toLog += "Start: " + std::to_string(reinterpret_cast<uintptr_t>(start)) +
+           " End: " + std::to_string(reinterpret_cast<uintptr_t>(end)) + "\n";
+
+for (const auto& node : nodes) {
+    s_toLog += "Node " + std::to_string(reinterpret_cast<uintptr_t>(&node)) +
+               " [id=" + std::to_string(node.node_id) + "] type: " + node.debugNodeTypeString;
+    
+    if (&node == start) s_toLog += " <-- START";
+    if (&node == end) s_toLog += " <-- END";
+    
+    for (auto* intnode : intermediateNodes) {
+        if (&node == intnode) s_toLog += " <-- INTERMEDIATE";
+    }
+    
+    s_toLog += "\n";
+}
+
+s_toLog += "Intermediate nodes: ";
+for (const auto& node : intermediateNodes) {
+    if (node)
+        s_toLog += std::to_string(reinterpret_cast<uintptr_t>(node)) + "[id=" +
+                   std::to_string(node->node_id) + "] ";
+}
+s_toLog += "\n-----------------------\n";
+
+}
 };
