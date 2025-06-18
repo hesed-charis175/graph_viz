@@ -71,6 +71,8 @@ static void showNodeEditor(WindowData* winData, Node* editableNode, bool editabl
         if(editable) drawNode(*editableNode, Config::s_selectionColor, true);
     }
 
+    s_toLog += "[DEBUG/UI] Adding node from editableNode " + std::to_string(reinterpret_cast<uintptr_t>(editableNode)) + 
+            "[id=" + std::to_string(editableNode->node_id) + "] type: " + std::to_string(static_cast<int>(type)) + " | " + editableNode->debugNodeTypeString + "\n";
 
 
     // Segmentation fault (core dumped) comes from here. I should probably find a way to handle this... What causes it.
@@ -89,8 +91,15 @@ static void showNodeEditor(WindowData* winData, Node* editableNode, bool editabl
     ImGui::SameLine();
     if(!editable){
         if(ImGui::Button("Add Node")){
+            if (!s_Graph.isNodePtrValid(editableNode) && editable) {
+        s_toLog += "[DEBUG] Editable pointer" + std::to_string(reinterpret_cast<uintptr_t>(editableNode)) + " is NOT valid in s_Graph.nodes! Possible stale pointer!\n";
+    } else {
+        s_toLog += "[DEBUG] Editable pointer" + std::to_string(reinterpret_cast<uintptr_t>(editableNode)) + " is valid in s_Graph.nodes! (Not yet in s_Graph)\n";
+    }
+            s_Graph.debugPrintState();        
             editableNode->setNodeType(NodeType::None);
             s_Graph.addNode(*editableNode);
+            s_Graph.debugPrintState();
             s_Graph.setNodeType(&s_Graph.nodes.back(), type);
             s_Graph.enforceNodeTypeConsistency();
             
@@ -100,6 +109,12 @@ static void showNodeEditor(WindowData* winData, Node* editableNode, bool editabl
         }
     }else{
         if(ImGui::Button("Edit")){
+if (!s_Graph.isNodePtrValid(editableNode) && editable) {
+        s_toLog += "[DEBUG] Editable pointer" + std::to_string(reinterpret_cast<uintptr_t>(editableNode)) + " is NOT valid in s_Graph.nodes! Possible stale pointer!\n";
+    } else {
+        s_toLog += "[DEBUG] Editable pointer" + std::to_string(reinterpret_cast<uintptr_t>(editableNode)) + " is valid in s_Graph.nodes! (Not yet in s_Graph)\n";
+    }
+            s_Graph.debugPrintState();         
             s_Graph.setNodeType(editableNode, type);
             s_targetEditable = nullptr;
             ImGui::CloseCurrentPopup();
