@@ -30,14 +30,68 @@ static void updateKeyBuffer(){
     }
 }
 
+static void showDebugLogs(WindowData* winData) {
+    static int location = 2;
+    static std::unordered_set<std::string> uniqueLogs;
+    static std::vector<std::string> logHistory;
+    static bool scrollToBottom = false;
 
+    if (!s_toLog.empty() && uniqueLogs.find(s_toLog) == uniqueLogs.end()) {
+        uniqueLogs.insert(s_toLog);
+        logHistory.push_back(s_toLog);
+        scrollToBottom = true;
+    }
+
+    ImGuiWindowFlags winFlags = ImGuiWindowFlags_NoDecoration | 
+                                 ImGuiWindowFlags_NoDocking | 
+                                 ImGuiWindowFlags_NoSavedSettings | 
+                                 ImGuiWindowFlags_NoFocusOnAppearing | 
+                                 ImGuiWindowFlags_NoNav | 
+                                 ImGuiWindowFlags_NoCollapse | 
+                                 ImGuiWindowFlags_NoMove;
+
+    const float PAD = 10.0f;
+    const float fixedWidth = 600.0f;
+    const float fixedHeight = 500.0f;
+
+    const ImGuiViewport* viewport = ImGui::GetMainViewport();
+    ImVec2 work_pos = viewport->WorkPos;
+    ImVec2 work_size = viewport->WorkSize;
+    ImVec2 window_pos, window_pos_pivot;
+
+    window_pos.x = (location & 1) ? (work_pos.x + work_size.x - PAD) : (work_pos.x + PAD);
+    window_pos.y = (location & 2) ? (work_pos.y + work_size.y - PAD) : (work_pos.y + PAD);
+    window_pos_pivot.x = (location & 1) ? 1.0f : 0.0f;
+    window_pos_pivot.y = (location & 2) ? 1.0f : 0.0f;
+
+    ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
+    ImGui::SetNextWindowViewport(viewport->ID);
+    ImGui::SetNextWindowSize(ImVec2(fixedWidth, fixedHeight));
+    ImGui::SetNextWindowBgAlpha(0.35f);
+
+    if (ImGui::Begin("Graph Memory Logs", &winData->showAppSimpleOverlay, winFlags)) {
+        ImGui::Text("Graph Memory Logs");
+        ImGui::Separator();
+
+        ImGui::BeginChild("LogScrollRegion", ImVec2(0, 0), false, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+        
+        for (const std::string& log : logHistory) {
+            ImGui::TextWrapped("%s", log.c_str());
+            std::cout << log << std::endl;
+        }
+
+        if (scrollToBottom) {
+            ImGui::SetScrollHereY(1.0f);
+            scrollToBottom = false;
+        }
+
+        ImGui::EndChild();
+    }
+
+    ImGui::End();
+}
 
 enum class DebugPosition {TopLeft, TopRight, BottomLeft, BottomRight};
-
-//////////////////////////////////////////////////////////////////////////////////////////////
-// DebugPosition will be used later in the settings to position the node debug list overlay //
-//////////////////////////////////////////////////////////////////////////////////////////////
-
 static void showDebugNodeList(WindowData* winData){
     static int location = 1;
 
@@ -72,7 +126,7 @@ static void showDebugNodeList(WindowData* winData){
         for(auto node : s_Graph.nodes){
             bool isBeingEdited = false;
             if(winData->editableNode && &node == s_targetEditable) isBeingEdited = true;
-            ImGui::Text("[NODE] : Position(%.2f, %.2f) | Type(%s)", node.position.x, node.position.y, node.debugNodeTypeString.c_str());
+            ImGui::Text("[NODE_ID %d] : Position(%.2f, %.2f) | Type(%s)", static_cast<int>(node.node_id), node.position.x, node.position.y, node.debugNodeTypeString.c_str());
             if(isBeingEdited) {
                 ImGui::SameLine();
                 ImGui::Text("<Edit Mode>");
