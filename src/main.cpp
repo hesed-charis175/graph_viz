@@ -3,14 +3,11 @@
 #include "imgui_impl_opengl3.h"
 #include <stdio.h>
 
-
 #include "render.hpp"
-
-
-
 
 #define GL_SILENCE_DEPRECATION
 #include <GLFW/glfw3.h> 
+
 
 // Just updated the multi selection node editor for group position change/editing
 // But in this case, i am selecting every single node of the graph
@@ -21,21 +18,25 @@ static void glfw_error_callback(int error, const char* description)
 }
 
 
+
+
 int main(int, char**)
 {
+
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
         return 1;
 
 
+
     const char* glsl_version = "#version 130";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-
-
+    
+    
     GLFWwindow* window = glfwCreateWindow(Config::windowWidth, 
         Config::windowHeight, 
-        "Graph Viewer - HLAB", 
+        "Graph Viewer - HLAB",
         nullptr, nullptr);
     if (window == nullptr)
         return 1;
@@ -43,7 +44,8 @@ int main(int, char**)
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
 
-    
+
+
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -52,6 +54,7 @@ int main(int, char**)
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; 
     
+
 
     ImGui::StyleColorsDark();
     
@@ -77,6 +80,7 @@ int main(int, char**)
             ImGui_ImplGlfw_Sleep(10);
             continue;
 
+
         }
 
         ImGui_ImplOpenGL3_NewFrame();
@@ -84,7 +88,6 @@ int main(int, char**)
         ImGui::NewFrame();
     
         graphVisualizerRender(&s_renderingFlag);
-
 
         ImGui::Render();
         int display_w, display_h;
@@ -105,6 +108,7 @@ int main(int, char**)
             ImGui::RenderPlatformWindowsDefault();
             glfwMakeContextCurrent(backup_current_context);
         }
+
 
         glfwSwapBuffers(window);
 

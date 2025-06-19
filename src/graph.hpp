@@ -18,14 +18,32 @@ struct Node{
     static size_t global_id_counter;
     size_t node_id;
     Vec2 position;
-    bool isIntermediate = false;
-    bool isStart = false;
-    bool isEnd = false;
+    bool isIntermediate;
+    bool isStart;
+    bool isEnd;
     std::vector<Node*> neighbors;
     std::string debugNodeTypeString;
 
-    Node() : position(0, 0) {}
-    Node(float x, float y): position(x, y) {}
+    Node() : 
+        node_id(global_id_counter++),
+        position(0, 0), 
+        isIntermediate(false),
+        isStart(false),
+        isEnd(false) {}
+    Node(float x, float y): 
+        node_id(global_id_counter++),
+        position(x, y), 
+        isIntermediate(false),
+        isStart(false),
+        isEnd(false) {}
+    Node(const Node& other) : 
+        node_id(global_id_counter++),
+        position(other.position), 
+        isIntermediate(other.isIntermediate),
+        isStart(other.isStart), 
+        isEnd(other.isEnd), 
+        neighbors(),
+        debugNodeTypeString(other.debugNodeTypeString){}
     NodeType getNodeType() const{
         if(isEnd) { return NodeType::End; }
         if(isIntermediate) { return NodeType::Intermediate; }
@@ -171,22 +189,18 @@ struct Graph{
             if (&node == start) {
                 if (!node.isStart) node.setNodeType(NodeType::Start);
             } else if (node.isStart) {
-                node.setNodeType(NodeType::None);
+                if(&node != end && std::find(intermediateNodes.begin(), intermediateNodes.end(), &node) == intermediateNodes.end()) node.setNodeType(NodeType::None);
             }
-        }
-        for (auto& node : nodes) {
             if (&node == end) {
                 if (!node.isEnd) node.setNodeType(NodeType::End);
             } else if (node.isEnd) {
-                node.setNodeType(NodeType::None);
+                if(&node == start && std::find(intermediateNodes.begin(), intermediateNodes.end(), &node) == intermediateNodes.end()) node.setNodeType(NodeType::None);
             }
-        }
-        for (auto& node : nodes) {
             bool isIntermediate = std::find(intermediateNodes.begin(), intermediateNodes.end(), &node) != intermediateNodes.end();
             if (isIntermediate) {
                 if (!node.isIntermediate) node.setNodeType(NodeType::Intermediate);
             } else if (node.isIntermediate) {
-                node.setNodeType(NodeType::None);
+                if(&node != start && &node != end) node.setNodeType(NodeType::None);
             }
         }
     }
@@ -225,4 +239,5 @@ for (const auto& node : intermediateNodes) {
 s_toLog += "\n-----------------------\n";
 
 }
+
 };
