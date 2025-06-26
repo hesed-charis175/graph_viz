@@ -29,13 +29,13 @@ struct Node{
         position(0, 0), 
         isIntermediate(false),
         isStart(false),
-        isEnd(false) {}
+        isEnd(false){}
     Node(float x, float y): 
         node_id(global_id_counter++),
         position(x, y), 
         isIntermediate(false),
         isStart(false),
-        isEnd(false) {}
+        isEnd(false){}
     Node(const Node& other) : 
         node_id(global_id_counter++),
         position(other.position), 
@@ -56,10 +56,10 @@ struct Node{
     }
 
     void setNodeType(NodeType type){
-        if(type == NodeType::Start) {  debugNodeTypeString = "START"; isStart = true; isIntermediate = false; isEnd = false; }
-        if(type == NodeType::Intermediate) {  debugNodeTypeString = "INTERMEDIATE"; isStart = false; isIntermediate = true; isEnd = false; }
-        if(type == NodeType::End) {  debugNodeTypeString = "END"; isStart = false; isIntermediate = false; isEnd = true; }
-        if(type == NodeType::None) {  debugNodeTypeString = "DEFAULT"; isStart = false; isIntermediate = false; isEnd = false; }
+        if(type == NodeType::Start) { debugNodeTypeString = "START"; isStart = true; isIntermediate = false; isEnd = false; }
+        else if(type == NodeType::Intermediate) { debugNodeTypeString = "INTERMEDIATE"; isStart = false; isIntermediate = true; isEnd = false; }
+        else if(type == NodeType::End) { debugNodeTypeString = "END"; isStart = false; isIntermediate = false; isEnd = true; }
+        else if(type == NodeType::None) { debugNodeTypeString = "DEFAULT"; isStart = false; isIntermediate = false; isEnd = false; }
     }
     ~Node(){
         neighbors.clear();
@@ -89,6 +89,43 @@ struct Graph{
         end = nullptr;
         
     }
+    // void setNodeType(Node* node, NodeType type){
+    //     // assert(isNodePtrValid(node) && "Node* must be in graph when setting type!");
+    //     assert(true && "Test assertion!");
+    //     if(!node) return;
+
+    //     if(type == NodeType::Start){
+    //         if(start && start != node) setNodeType(start, NodeType::None);
+    //         start = node;
+    //         if (node == end) end = nullptr;
+    //     }
+
+    //     else if(type == NodeType::End){
+    //         if(end && end != node) setNodeType(end, NodeType::None);
+    //         end = node;
+    //         if (node == start) start = nullptr;
+    //     }
+
+    //     else if(type == NodeType::Intermediate){
+    //         if(std::find(intermediateNodes.begin(), intermediateNodes.end(), node) == intermediateNodes.end()) intermediateNodes.push_back(node);
+    //     }
+
+    //     else{
+    //         intermediateNodes.erase(std::remove(
+    //             intermediateNodes.begin(), intermediateNodes.end(), node
+    //         ), intermediateNodes.end());
+    //         if (node == start) start = nullptr;
+    //         if (node == end) end = nullptr; 
+    //     }
+
+    //     node->setNodeType(type);
+
+    //     s_toLog += "[DEBUG] setNodeType: " + std::to_string(reinterpret_cast<uintptr_t>(node)) + "[id=" + std::to_string(node->node_id) +"] set to " + std::to_string(static_cast<int>(type)) + "\n";
+    //     debugPrintState();
+    // }
+    
+
+    
     void setNodeType(Node* node, NodeType type){
 
         if(!node) return;
@@ -96,6 +133,7 @@ struct Graph{
         for(auto& n : nodes){
             n.setNodeType(NodeType::None);
         }
+
         switch(type){
             case NodeType::Start: 
                 if(node == end) end = nullptr;
@@ -108,45 +146,53 @@ struct Graph{
             case NodeType::Intermediate:
                 if(node == start) start = nullptr;
                 if(node == end) end = nullptr;
-                if(std::find(intermediateNodes.begin(), intermediateNodes.end(), node) == intermediateNodes.end()) intermediateNodes.push_back(node);
             break;
             case NodeType::None:
                 if(node == start) start = nullptr;
                 if(node == end) end = nullptr;
-
             break;
-        } 
+        }
+
+        if (type == NodeType::Intermediate && node != start && node != end) {
+            auto it = std::find(intermediateNodes.begin(), intermediateNodes.end(), node);
+            if (it == intermediateNodes.end()) {
+                intermediateNodes.push_back(node);
+            }
+        }
+
         if(type != NodeType::Intermediate){
-                auto it = std::find(intermediateNodes.begin(), intermediateNodes.end(), node);
-                if (it != intermediateNodes.end()) intermediateNodes.erase(it);
+            auto it = std::find(intermediateNodes.begin(), intermediateNodes.end(), node);
+            if (it != intermediateNodes.end()) {
+                intermediateNodes.erase(it);
+            }
         }
-        for(auto intermediate_N : intermediateNodes){
-            intermediate_N = getNodeAt(intermediate_N->position, 1, 1);
-            std::cout << intermediate_N->debugNodeTypeString << "   ";
-            intermediate_N->position.print();
-            std::cout << std::endl;
-            intermediate_N->setNodeType(NodeType::Intermediate);
+        std::vector<Node*> updatedIntermediateNodes;
+
+        for(auto& iNode: intermediateNodes){
+            if(!iNode) continue;
+
+            Node* updated = getNodeAt(iNode->position, 5.0f, 5.0f);
+            if(updated){
+                updated->setNodeType(NodeType::Intermediate);
+                updatedIntermediateNodes.push_back(updated);
+            }
         }
+
+        intermediateNodes = std::move(updatedIntermediateNodes);
 
         if(start) {
             start = getNodeAt(start->position, 1, 1);
-            auto it = std::find(intermediateNodes.begin(), intermediateNodes.end(), node);
-            if (it != intermediateNodes.end()) intermediateNodes.erase(it);
             start->setNodeType(NodeType::Start);
         }
         if(end) {
             end = getNodeAt(end->position, 1, 1);
-            auto it = std::find(intermediateNodes.begin(), intermediateNodes.end(), node);
-            if (it != intermediateNodes.end()) intermediateNodes.erase(it);
             end->setNodeType(NodeType::End);
         }
-        
-        s_toLog += "[DEBUG] setNodeType: " + std::to_string(reinterpret_cast<uintptr_t>(node)) + "[id=" + std::to_string(node->node_id) +"] set to " + std::to_string(static_cast<int>(type)) + "\n";
-        debugPrintState();
+
     }
     
     
-    void addNode(const Node& copyNode){
+void addNode(const Node& copyNode){
     nodes.emplace_back(copyNode);
     s_toLog += "[DEBUG] addNode: Added node " + std::to_string(reinterpret_cast<uintptr_t>(&nodes.back())) 
            + " [id=" + std::to_string(nodes.back().node_id) + "] from copyNode " + std::to_string(reinterpret_cast<uintptr_t>(&copyNode)) + " [id=" + std::to_string(copyNode.node_id) + "] (type: " 
