@@ -54,4 +54,11 @@ Here are the requirements and how to install them (Debian-based/Ubuntu):
 
 3. Run the Application
    ```sh
-   ./graph_viewer
+   ./graph_viewer```
+
+## Screenshots
+
+![Screenshot from 2025-06-24 03-28-18](https://github.com/user-attachments/assets/709632f8-9edb-433c-9b57-05054fc9e5ea)
+![Screenshot from 2025-06-18 15-28-30](https://github.com/user-attachments/assets/d82412a0-f2b8-43b3-895d-6c9f4a397043)
+![Screenshot from 2025-06-18 15-28-01](https://github.com/user-attachments/assets/417aef44-9658-46ee-b3b9-1196f43765eb)
+
