@@ -89,43 +89,7 @@ struct Graph{
         end = nullptr;
         
     }
-    // void setNodeType(Node* node, NodeType type){
-    //     // assert(isNodePtrValid(node) && "Node* must be in graph when setting type!");
-    //     assert(true && "Test assertion!");
-    //     if(!node) return;
 
-    //     if(type == NodeType::Start){
-    //         if(start && start != node) setNodeType(start, NodeType::None);
-    //         start = node;
-    //         if (node == end) end = nullptr;
-    //     }
-
-    //     else if(type == NodeType::End){
-    //         if(end && end != node) setNodeType(end, NodeType::None);
-    //         end = node;
-    //         if (node == start) start = nullptr;
-    //     }
-
-    //     else if(type == NodeType::Intermediate){
-    //         if(std::find(intermediateNodes.begin(), intermediateNodes.end(), node) == intermediateNodes.end()) intermediateNodes.push_back(node);
-    //     }
-
-    //     else{
-    //         intermediateNodes.erase(std::remove(
-    //             intermediateNodes.begin(), intermediateNodes.end(), node
-    //         ), intermediateNodes.end());
-    //         if (node == start) start = nullptr;
-    //         if (node == end) end = nullptr; 
-    //     }
-
-    //     node->setNodeType(type);
-
-    //     s_toLog += "[DEBUG] setNodeType: " + std::to_string(reinterpret_cast<uintptr_t>(node)) + "[id=" + std::to_string(node->node_id) +"] set to " + std::to_string(static_cast<int>(type)) + "\n";
-    //     debugPrintState();
-    // }
-    
-
-    
     void setNodeType(Node* node, NodeType type){
 
         if(!node) return;
