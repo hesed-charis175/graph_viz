@@ -36,7 +36,28 @@ void graphVisualizerRender(bool* p_open){
     if (s_winData.updateNodes) updateNodes(&s_winData);
     if (s_winData.showNodeDebugList) showDebugNodeList(&s_winData);
     if (s_winData.showDebugLogs) showDebugLogs(&s_winData);
+    
+    ImGuiIO& io = ImGui::GetIO();
+    if(io.KeyCtrl) {
+        s_winData.multiSelectionEnabled = true;
+    }
+    if(s_selectedNodes.size() > 0 && s_winData.multiSelectionEnabled && !io.KeyCtrl){
+        s_winData.keepMultiSelectionOpened = true;
+        if(!s_tempPositionCaptured){
+            s_tempPosition = {s_selectedNodes[0]->position.x, s_selectedNodes[0]->position.y};
+            s_tempPositionCaptured = true;
+        }
+    }
 
+    if(s_winData.multiSelectionEnabled){
+        for(auto& n : s_selectedNodes){
+            drawNode(*n, Config::s_selectionColor, true);
+            n->print();
+        }
+    }else{
+        s_selectedNodes.clear();
+    }
+            
     
     const ImGuiViewport* mainViewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(ImVec2(mainViewport->WorkPos.x + 20, mainViewport->WorkPos.y + 20), ImGuiCond_Once);
@@ -46,7 +67,6 @@ void graphVisualizerRender(bool* p_open){
         ImGui::End();
         return;
     }
-
 
     const float labelWidthBase = ImGui::GetFontSize() * 12;
     const float labelWidthMax = ImGui::GetContentRegionAvail().x * 0.40f;
