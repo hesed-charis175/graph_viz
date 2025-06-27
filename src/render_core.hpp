@@ -21,6 +21,8 @@ struct WindowData{
     bool updateNodes = true;
     bool showNodeDebugList = false;
     bool editableNode = false;
+    bool multiSelectionEnabled = false;
+    bool keepMultiSelectionOpened = false;
     bool showDebugLogs = false;
 };
 
@@ -39,3 +41,9 @@ static Node* s_targetEditable;
 static std::vector<Node*> s_selectedNodes;
 
 static bool s_WasPopupOpen = false;
+
+static Vec2 s_tempPosition;
+static bool s_tempPositionCaptured = false;
+
+
+static std::vector<NodeType> s_nodeTypes;
