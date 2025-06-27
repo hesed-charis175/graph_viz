@@ -100,8 +100,10 @@ static void showNodeEditor(WindowData* winData, Node* editableNode, bool editabl
             editableNode->setNodeType(NodeType::None);
             s_Graph.addNode(*editableNode);
             s_Graph.debugPrintState();
+            
+            std::cout << s_toLog << std::endl;
             s_Graph.setNodeType(&s_Graph.nodes.back(), type);
-            s_Graph.enforceNodeTypeConsistency();
+            // s_Graph.enforceNodeTypeConsistency();
             
             winData->editableNode = false;
             ImGui::CloseCurrentPopup();
@@ -126,3 +128,60 @@ if (!s_Graph.isNodePtrValid(editableNode) && editable) {
     }
 
 }
+
+static void showMultiNodeEditor(WindowData* winData){    
+    int _x = 0, _y = 0;
+    
+    std::cout << "Difference: " << s_selectedNodes[0]->position.x << " - " << s_tempPosition.x << std::endl;
+    ImGui::SeparatorText("Node Position");
+    ImGui::SameLine();
+    
+    HelpMarker(Strings::nodeHelpMarker);  
+    ImGui::InputInt("X coordinate", &_x, 10);
+
+    if (_x > Config::windowWidth - Config::nodeSize) _x = Config::windowWidth - Config::nodeSize;
+    if (_x < -Config::windowWidth + Config::nodeSize) _x = -Config::windowWidth + Config::nodeSize;
+
+    
+    ImGui::InputInt("Y coordinate", &_y, 10);
+    
+    if (_y > Config::windowHeight - Config::nodeSize) _y = Config::windowHeight - Config::nodeSize;
+    if (_y < -Config::windowHeight + Config::nodeSize) _y = -Config::windowHeight + Config::nodeSize;
+    
+
+    if(Config::allowNodeDragging){
+        if(ImGui::IsMouseDragging(0, 0.1f)){
+            _x += ImGui::GetIO().MouseDelta.x;
+            _y += ImGui::GetIO().MouseDelta.y;
+        }
+    }
+    for(auto& n : s_selectedNodes){
+        n->position = {n->position.x + _x, n->position.y + _y};
+    }
+
+    s_toLog += "[DEBUG] MultiSelection Enabled!\n";
+    
+    if(ImGui::Button("Cancel")){
+        Vec2 position = {s_selectedNodes[0]->position.x, s_selectedNodes[0]->position.y};
+        for(auto& n : s_selectedNodes){
+            n->position = {n->position.x - (position.x - s_tempPosition.x), n->position.y - (position.y - s_tempPosition.y)};
+        }
+        s_selectedNodes.clear();
+        s_winData.keepMultiSelectionOpened = false;
+        s_winData.multiSelectionEnabled = false;
+        s_tempPosition = {0, 0};
+        s_tempPositionCaptured = false;
+        ImGui::CloseCurrentPopup();
+    }
+    ImGui::SameLine();
+    if(ImGui::Button("Edit")){
+        s_selectedNodes.clear();
+        s_winData.keepMultiSelectionOpened = false;
+        s_winData.multiSelectionEnabled = false;
+        s_tempPosition = {0, 0};
+        s_tempPositionCaptured = false;
+        ImGui::CloseCurrentPopup();
+    }
+
+}
+
