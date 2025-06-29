@@ -1,6 +1,7 @@
 #include "config.hpp"
 #include "graph_inst.hpp"
 #include <chrono>
+#include <functional>
 #include <sstream>
 #include <iomanip>
 #include <unordered_set>
@@ -17,13 +18,17 @@ struct WindowData{
     bool showAbout = false;
     bool showStyleEditor = false;
     bool showNodeEditor = false;
+    bool showNodeDebugList = true;
+    bool showDebugLogs = true;
+
+
+    bool allNodesSelected = false;
     bool evaluateClick = true;
     bool updateNodes = true;
-    bool showNodeDebugList = false;
     bool editableNode = false;
     bool multiSelectionEnabled = false;
     bool keepMultiSelectionOpened = false;
-    bool showDebugLogs = false;
+    bool hoveringJoystick = false;
 };
 
 static WindowData s_winData;
@@ -47,3 +52,6 @@ static bool s_tempPositionCaptured = false;
 
 
 static std::vector<NodeType> s_nodeTypes;
+
+static ImVec2 lastZoomFocus;
+static float lastZoom = Config::zoom;
