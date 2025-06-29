@@ -2,15 +2,15 @@ static void drawNode(Node node, ImVec4& color, bool outline = false){
     ImDrawList* drawList = ImGui::GetBackgroundDrawList(ImGui::GetMainViewport());
 
     if(!drawList){
-        std::cout << "[DEBUG]   DrawList is null!" << std::endl;
+        Logger::log("[DEBUG] DrawList is null!");
         return;
     }
     
-    ImVec2 origin = ImGui::GetMainViewport()->Pos;
+    ImVec2 origin = {ImGui::GetMainViewport()->Pos.x + Config::panOffset.x, ImGui::GetMainViewport()->Pos.y + Config::panOffset.y};
+
     ImVec2 pos = ImVec2(
-        node.position.x + origin.x, 
-        node.position.y + origin.y
-        
+        node.position.x * Config::zoom + origin.x, 
+        node.position.y * Config::zoom + origin.y
     );
     ImU32 colorU32 = ImGui::ColorConvertFloat4ToU32(color);
     
@@ -39,14 +39,13 @@ static void drawNode(Node node, ImVec4& color, bool outline = false){
         }
         
         drawList->AddCircleFilled(pos, Config::nodeSize, colorU32);
-        // std::cout << "Drawing now" << std::endl;
     }
 }
 
 static void updateNodes(WindowData* winData){
-    for(auto node : s_Graph.nodes){
+    for(auto& node : s_Graph.nodes){
         ImVec4 tmpNodeColor;
-        switch(node.getNodeType()){
+        switch(node->getNodeType()){
             case NodeType::Start: 
                 tmpNodeColor = Config::s_startColor;
                 break;
@@ -60,11 +59,41 @@ static void updateNodes(WindowData* winData){
                 tmpNodeColor = Config::s_nodeColor;
                 break;
         }
-        if (node.position.x >= 0 && node.position.y >= 0) {
-            drawNode(node, tmpNodeColor);
+        if (node->position.x >= 0 && node->position.y >= 0) {
+            drawNode(*node.get(), tmpNodeColor);
         }
     }
-
-    // if(s_Graph.start) s_Graph.start->print();
 }
 
+static void drawEdge(Vec2 _positionNode1, Vec2 _positionNode2, ImVec4 color){
+    ImDrawList* drawList = ImGui::GetBackgroundDrawList(ImGui::GetMainViewport());
+    ImVec2 origin = {ImGui::GetMainViewport()->Pos.x + Config::panOffset.x, ImGui::GetMainViewport()->Pos.y + Config::panOffset.y};
+
+
+    for (int i = 0; i < Config::glowEdgeIterations; ++i) {
+        float thickness = Config::edgeThickness + i * Config::glowEdgeFactor;
+        float alpha = (Config::glowEdgeFactor - i * 0.1f) * 0.2f * Config::glowEdgeFactor;
+        ImVec4 glowColor = ImVec4(color.x, color.y, color.z, alpha);
+        ImU32 glowU32 = ImGui::ColorConvertFloat4ToU32(glowColor);
+        drawList->AddLine({_positionNode1.x + origin.x, _positionNode1.y + origin.y}, 
+                {_positionNode2.x + origin.x, _positionNode2.y + origin.y}, glowU32, thickness);
+    }
+}
+
+static void updateEdges(WindowData* winData){
+
+    for(const auto& edge : s_Graph.edges){
+        Node* a = edge.first;
+        Node* b = edge.second;
+        a = s_Graph.getNodeAt(a->position, Config::selectionRadius, Config::nodeSize);
+        b = s_Graph.getNodeAt(b->position, Config::selectionRadius, Config::nodeSize);
+        if(!a || !b || a == b) 
+        {
+            Logger::log("Edge did abracadabra!(" + std::to_string(edge.first->position.x)
+             + ", " + std::to_string(edge.first->position.y) + ")" + "(" + std::to_string(edge.second->position.x)
+             + ", " + std::to_string(edge.second->position.y) + ")");
+            continue;
+        }
+        drawEdge(a->position, b->position, Config::s_edgeColor);
+    }
+}
