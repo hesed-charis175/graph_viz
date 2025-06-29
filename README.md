@@ -28,7 +28,14 @@ It provides a map-based interface where users can adjust the nature of node conn
 - ImGui  
 - Graph Theory and Pathfinding Algorithms
 
-## Requirements
+
+# Requirements
+
+---------------
+
+## On Linux:
+
+### Requirements
 
 Here are the requirements and how to install them (Debian-based/Ubuntu):
 
@@ -41,7 +48,7 @@ Here are the requirements and how to install them (Debian-based/Ubuntu):
   sudo apt install libglfw3-dev libglew-dev libglm-dev
 
 
-## Building the Project
+### Building the Project
 1. Clone the repository  
    ```sh
    git clone https://github.com/hesed-charis175/graph_viz.git
@@ -55,3 +62,56 @@ Here are the requirements and how to install them (Debian-based/Ubuntu):
 3. Run the Application
    ```sh
    ./graph_viewer
+
+## On Windows:
+
+### Setup
+
+Option 1: VS Code (Using MSYS2)
+- Install MSYS2 and open MSYS2 terminal
+
+- Update and install dependencies
+  ```
+    pacman -Syu
+    pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-make
+    pacman -S mingw-w64-x86_64-glfw mingw-w64-x86_64-glew mingw-w64-x86_64-glm
+  ```
+- Configure VS Code to use the MSYS2 terminal and toolchain
+
+
+Option 2: Visual Studio (Using vcpkg)
+- Install Visual Studio with "Desktop Development with C++" workload
+
+- Install vcpkg:
+  ```
+  git clone https://github.com/microsoft/vcpkg.git
+  .\vcpkg\bootstrap-vcpkg.bat
+  .\vcpkg\vcpkg install glfw3 glew glm
+  .\vcpkg\vcpkg integrate install
+  ```
+
+- Open the project in Visual Studio and build
+
+  ### Building the Project
+
+  1. Clone the repository
+      ```
+      git clone https://github.com/hesed-charis175/graph_viz.git
+      cd graph-visualizer
+      ```
+  2. Navigate to the /src directory and and compile the project
+   ```batch
+   cd src
+   make
+   ```
+
+  3. Run the Application
+    ```batch
+   .\graph_viewer.exe
+    ```
+
+
+
+
+
+    ==========
