@@ -7,11 +7,23 @@ namespace Config{
     ////////////////////////////////////////////////
     
     // Window Settings
+    const int defaultWindowWidth = 1280;
+    const int defaultWindowHeight = 720;
 
-    int windowWidth = 1280;
-    int windowHeight = 720;
+    int windowWidth;
+    int windowHeight;
 
-    
+    bool showGrids = true;
+    float minGridSpacing = 2.0f;
+    float maxGridSpacing = 80.0f;
+    float gridSpacing = 40.0f;
+
+    float joystickRadius = 60.0f;
+
+    float zoom = 1.0f;
+
+    ImVec2 panOffset = ImVec2(0, 0);
+    float maxPan = 60.0f;
     
     // Node Settings
 
@@ -33,6 +45,8 @@ namespace Config{
 
     float selectionRadius = 10.0f;
 
+    float edgeSnapRadius = 18.0f;
+    float edgeDeletionThreshold = 5.0f;
     // Edge settings
 
     int edgeThickness = 3;

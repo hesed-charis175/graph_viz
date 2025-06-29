@@ -30,29 +30,19 @@ static void updateKeyBuffer(){
     }
 }
 
+
+enum class DebugPosition {TopLeft, TopRight, BottomLeft, BottomRight};
+
+
 static void showDebugLogs(WindowData* winData) {
-    static int location = 2;
+    static int location = static_cast<int>(DebugPosition::BottomLeft);
     static std::unordered_set<std::string> uniqueLogs;
     static std::vector<std::string> logHistory;
-    static bool scrollToBottom = false;
 
-    if (!s_toLog.empty() && uniqueLogs.find(s_toLog) == uniqueLogs.end()) {
-        uniqueLogs.insert(s_toLog);
-        logHistory.push_back(s_toLog);
-        scrollToBottom = true;
-    }
 
-    ImGuiWindowFlags winFlags = ImGuiWindowFlags_NoDecoration | 
-                                 ImGuiWindowFlags_NoDocking | 
-                                 ImGuiWindowFlags_NoSavedSettings | 
-                                 ImGuiWindowFlags_NoFocusOnAppearing | 
-                                 ImGuiWindowFlags_NoNav | 
-                                 ImGuiWindowFlags_NoCollapse | 
-                                 ImGuiWindowFlags_NoMove;
+    ImGuiWindowFlags winFlags = ImGuiWindowFlags_None;
 
     const float PAD = 10.0f;
-    const float fixedWidth = 600.0f;
-    const float fixedHeight = 500.0f;
 
     const ImGuiViewport* viewport = ImGui::GetMainViewport();
     ImVec2 work_pos = viewport->WorkPos;
@@ -65,8 +55,6 @@ static void showDebugLogs(WindowData* winData) {
     window_pos_pivot.y = (location & 2) ? 1.0f : 0.0f;
 
     ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
-    ImGui::SetNextWindowViewport(viewport->ID);
-    ImGui::SetNextWindowSize(ImVec2(fixedWidth, fixedHeight));
     ImGui::SetNextWindowBgAlpha(0.35f);
 
     if (ImGui::Begin("Graph Memory Logs", &winData->showAppSimpleOverlay, winFlags)) {
@@ -75,15 +63,12 @@ static void showDebugLogs(WindowData* winData) {
 
         ImGui::BeginChild("LogScrollRegion", ImVec2(0, 0), false, ImGuiWindowFlags_AlwaysVerticalScrollbar);
         
-        for (const std::string& log : logHistory) {
+        const auto& logs = Logger::getBufferedLogs();
+        for (const auto& log : logs) {
             ImGui::TextWrapped("%s", log.c_str());
-            std::cout << log << std::endl;
         }
 
-        if (scrollToBottom) {
-            ImGui::SetScrollHereY(1.0f);
-            scrollToBottom = false;
-        }
+        ImGui::SetScrollHereY(1.0f);
 
         ImGui::EndChild();
     }
@@ -91,13 +76,14 @@ static void showDebugLogs(WindowData* winData) {
     ImGui::End();
 }
 
-enum class DebugPosition {TopLeft, TopRight, BottomLeft, BottomRight};
-static void showDebugNodeList(WindowData* winData){
-    static int location = 1;
+
+static void showDebugNodeList(WindowData* winData, const std::function<void()>& popupContentCallback){
+    static int location = static_cast<int>(DebugPosition::TopRight);
 
     ImGuiWindowFlags winFlags = ImGuiWindowFlags_NoDecoration | 
     ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize | 
     ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+    ImVec2 origin = ImGui::GetMainViewport()->Pos;
 
     const float PAD = 10.0f;
     const ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -116,22 +102,50 @@ static void showDebugNodeList(WindowData* winData){
 
     ImVec2 minSize(0, 0);
     ImVec2 maxSize(400, 300);
-    ImGui::SetNextWindowSizeConstraints(minSize, maxSize);
+    // ImGui::SetNextWindowSizeConstraints(minSize, maxSize);
 
     if (ImGui::Begin("Node Debug List", &winData->showAppSimpleOverlay, winFlags))
     {
         ImGui::Text("Node Debug List");
         ImGui::Separator();
 
-        for(auto node : s_Graph.nodes){
+
+        if(s_Graph.start){
+            ImGui::Text("Start : NODE_ID %d | Position(%.2f, %.2f) | Type(%s)", static_cast<int>(s_Graph.start->node_id), s_Graph.start->position.x, s_Graph.start->position.y, s_Graph.start->debugNodeTypeString.c_str());
+        }
+        if(s_Graph.end){
+            ImGui::Text("End   : NODE_ID %d | Position(%.2f, %.2f) | Type(%s)", static_cast<int>(s_Graph.end->node_id), s_Graph.end->position.x, s_Graph.end->position.y, s_Graph.end->debugNodeTypeString.c_str());
+        }
+
+        ImGui::Separator();
+
+        for(auto& node : s_Graph.nodes){
             bool isBeingEdited = false;
-            if(winData->editableNode && &node == s_targetEditable) isBeingEdited = true;
-            ImGui::Text("[NODE_ID %d] : Position(%.2f, %.2f) | Type(%s)", static_cast<int>(node.node_id), node.position.x, node.position.y, node.debugNodeTypeString.c_str());
-            if(isBeingEdited) {
-                ImGui::SameLine();
-                ImGui::Text("<Edit Mode>");
+            if(winData->editableNode && node.get() == s_targetEditable) isBeingEdited = true;
+            ImGui::Text("[NODE_ID %d] : Position(%.2f, %.2f) | Type(%s)", 
+                static_cast<int>(node->node_id), node->position.x, 
+                node->position.y, node->debugNodeTypeString.c_str());
+            
+            ImGui::SameLine();
+            std::string nodeLabel =  isBeingEdited ? "##" + std::to_string(node->node_id) : "Select##" + std::to_string(node->node_id);
+            
+            if(isBeingEdited) ImGui::PushStyleColor(ImGuiCol_Button, Config::red);
+            if (ImGui::SmallButton(nodeLabel.c_str())) {
+                s_targetEditable = node.get();
+                winData->editableNode = node.get();
+
+                ImVec2 nodeEditorPosition = ImVec2(node->position.x + origin.x + 30.0f + Config::panOffset.x, node->position.y + origin.y + 30.0f + Config::panOffset.y);
+                ImGui::SetNextWindowPos(nodeEditorPosition, ImGuiCond_Always);
+                ImGui::OpenPopup("Node Editor");
+                if(winData->editableNode) HelpMarker("<Drag to Edit Node Position>");
             }
+            if(isBeingEdited) ImGui::PopStyleColor();
+
             ImGui::Separator();
+        }
+        if (ImGui::BeginPopup("Node Editor")) {
+            if(popupContentCallback) popupContentCallback();
+            ImGui::EndPopup();
         }
 
         if(winData->editableNode){
