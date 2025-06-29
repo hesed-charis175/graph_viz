@@ -99,17 +99,20 @@ Option 2: Visual Studio (Using vcpkg)
   ### Building the Project
 
   1. Clone the repository
+     
   ```
   git clone https://github.com/hesed-charis175/graph_viz.git
   cd graph-visualizer
   ```
   2. Navigate to the /src directory and and compile the project
+     
    ```batch
    cd src
    make
    ```
 
   3. Run the Application
+     
     ```batch
    .\graph_viewer.exe
     ```
