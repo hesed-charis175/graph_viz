@@ -1,3 +1,57 @@
+void nodePositionSection(Node* editableNode){
+     HelpMarker(Strings::nodeHelpMarker);  
+
+    int _x = editableNode->position.x, _y = editableNode->position.y;
+
+    ImGui::SeparatorText("Node Position");
+    ImGui::InputInt("X coordinate", &_x, 10);
+    
+    ImGui::InputInt("Y coordinate", &_y, 10);
+    
+    editableNode->position.x = static_cast<float>(_x);
+    editableNode->position.y = static_cast<float>(_y);
+}
+
+void showAddEditButton(WindowData* winData, bool editable, Node* editableNode, NodeType type){
+    if(!editable && ImGui::Button("Add")){
+        editableNode->setNodeType(NodeType::None);
+        s_Graph.addNode(*editableNode);
+        Logger::log(s_Graph.debugPrintState());
+        
+        s_Graph.setNodeType(s_Graph.nodes.back().get(), type);
+        
+        winData->editableNode = false;
+        ImGui::CloseCurrentPopup();
+        editableNode = nullptr;
+    } else if(editable && ImGui::Button("Edit")){
+        Logger::log(s_Graph.debugPrintState());       
+        s_Graph.setNodeType(editableNode, type);
+        s_targetEditable = nullptr;
+        ImGui::CloseCurrentPopup();
+        winData->editableNode = false;
+        s_CopiedOnceFlag = false;
+        editableNode = nullptr;
+    }
+}
+
+void showDeleteButton(WindowData* winData, Node* editableNode){
+    ImGui::PushStyleColor(ImGuiCol_Button, Config::red);
+    if(ImGui::Button(("Delete"))){
+        s_Graph.removeNode(s_targetEditable);
+        s_targetEditable = nullptr;
+        ImGui::CloseCurrentPopup();
+        winData->editableNode = false;
+        s_CopiedOnceFlag = false;
+        editableNode = nullptr;
+    }
+
+    ImGui::PopStyleColor();
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 80);
+    ImGui::SameLine();
+    
+}
+
 static void showNodeEditor(WindowData* winData, Node* editableNode, bool editable){
     if (editable && !s_CopiedOnceFlag) {
         s_copiedNode.position = editableNode->position;
@@ -7,9 +61,41 @@ static void showNodeEditor(WindowData* winData, Node* editableNode, bool editabl
         s_CopiedOnceFlag = true;
     }
     if(winData->editableNode && Config::allowNodeDragging){
-        if(ImGui::IsMouseDragging(0, 0.1f)){
-            editableNode->position.x += ImGui::GetIO().MouseDelta.x;
-            editableNode->position.y += ImGui::GetIO().MouseDelta.y;
+        // if(ImGui::IsMouseDragging(0, 0.1f)){
+        //     editableNode->position.x = (editableNode->position.x + ImGui::GetIO().MouseDelta.x )/ Config::zoom;
+        //     editableNode->position.y = (editableNode->position.y + ImGui::GetIO().MouseDelta.y) / Config::zoom;
+        // }
+
+
+        ImGuiIO& io = ImGui::GetIO();
+        static bool isDraggingNode = false;
+        static ImVec2 dragStartMouse;
+        static ImVec2 dragStartNodePos;
+
+
+        ImVec2 nodeScreenPos = {
+            editableNode->position.x * Config::zoom + Config::panOffset.x + ImGui::GetMainViewport()->Pos.x, 
+            editableNode->position.y * Config::zoom + Config::panOffset.y + ImGui::GetMainViewport()->Pos.y
+        };
+        float radius = Config::nodeSize;
+
+        ImVec2 delta = {io.MousePos.x - nodeScreenPos.x, io.MousePos.y - nodeScreenPos.y};
+        bool hoveringNode = (delta.x * delta.x + delta.y * delta.y) <= (radius * radius);
+
+        if (ImGui::IsMouseClicked(0) && hoveringNode) {
+            isDraggingNode = true;
+            dragStartMouse = io.MousePos;
+            dragStartNodePos = {editableNode->position.x, editableNode->position.y};
+
+        }
+        if (isDraggingNode && ImGui::IsMouseDragging(0, 0.1f)) {
+            ImVec2 mouseDeltaScreen = {io.MousePos.x - dragStartMouse.x, io.MousePos.y - dragStartMouse.y};
+            ImVec2 deltaWorld = {mouseDeltaScreen.x / Config::zoom, mouseDeltaScreen.y / Config::zoom};
+            editableNode->position = {dragStartNodePos.x + deltaWorld.x, dragStartNodePos.y + deltaWorld.y};
+        }
+
+        if (ImGui::IsMouseReleased(0)) {
+            isDraggingNode = false;
         }
     }
 
@@ -21,25 +107,7 @@ static void showNodeEditor(WindowData* winData, Node* editableNode, bool editabl
     ImGui::ListBox("Node Type", &currentType, nodeTypes, IM_ARRAYSIZE(nodeTypes), 4);
     ImGui::SameLine();
     
-    HelpMarker(Strings::nodeHelpMarker);  
-
-    int _x = editableNode->position.x, _y = editableNode->position.y;
-
-    ImGui::SeparatorText("Node Position");
-    ImGui::InputInt("X coordinate", &_x, 10);
-
-    if (_x > Config::windowWidth - Config::nodeSize) _x = Config::windowWidth - Config::nodeSize;
-    if (_x < 0) _x = 0;
-
-    
-    ImGui::InputInt("Y coordinate", &_y, 10);
-    
-    if (_y > Config::windowHeight - Config::nodeSize) _y = Config::windowHeight - Config::nodeSize;
-    if (_y < 0) _y = 0;
-
-    editableNode->position.x = static_cast<float>(_x);
-    editableNode->position.y = static_cast<float>(_y);
-
+    nodePositionSection(editableNode);
     NodeType type;
     ImVec4 tmpNodeColor;
     switch(currentType){
@@ -71,15 +139,13 @@ static void showNodeEditor(WindowData* winData, Node* editableNode, bool editabl
         if(editable) drawNode(*editableNode, Config::s_selectionColor, true);
     }
 
-    s_toLog += "[DEBUG/UI] Adding node from editableNode " + std::to_string(reinterpret_cast<uintptr_t>(editableNode)) + 
-            "[id=" + std::to_string(editableNode->node_id) + "] type: " + std::to_string(static_cast<int>(type)) + " | " + editableNode->debugNodeTypeString + "\n";
+    Logger::log("[DEBUG/UI] Adding node from editableNode " + std::to_string(reinterpret_cast<uintptr_t>(editableNode)) + 
+            "[id=" + std::to_string(editableNode->node_id) + "] type: " + std::to_string(static_cast<int>(type)) + " | " + editableNode->debugNodeTypeString + "\n");
 
-
-    // Segmentation fault (core dumped) comes from here. I should probably find a way to handle this... What causes it.
+    if(editable) showDeleteButton(winData, editableNode);
     if(ImGui::Button("Cancel")){
         if(editable){
             s_targetEditable = nullptr;
-            // editableNode->print();
             *editableNode = s_copiedNode;
             winData->editableNode = false;
             s_CopiedOnceFlag = false;
@@ -89,50 +155,26 @@ static void showNodeEditor(WindowData* winData, Node* editableNode, bool editabl
         if(!editable) *editableNode = Node();
     }
     ImGui::SameLine();
-    if(!editable){
-        if(ImGui::Button("Add Node")){
-            if (!s_Graph.isNodePtrValid(editableNode) && editable) {
-        s_toLog += "[DEBUG] Editable pointer" + std::to_string(reinterpret_cast<uintptr_t>(editableNode)) + " is NOT valid in s_Graph.nodes! Possible stale pointer!\n";
-    } else {
-        s_toLog += "[DEBUG] Editable pointer" + std::to_string(reinterpret_cast<uintptr_t>(editableNode)) + " is valid in s_Graph.nodes! (Not yet in s_Graph)\n";
-    }
-            s_Graph.debugPrintState();        
-            editableNode->setNodeType(NodeType::None);
-            s_Graph.addNode(*editableNode);
-            s_Graph.debugPrintState();
-            
-            std::cout << s_toLog << std::endl;
-            s_Graph.setNodeType(&s_Graph.nodes.back(), type);
-            // s_Graph.enforceNodeTypeConsistency();
-            
-            winData->editableNode = false;
-            ImGui::CloseCurrentPopup();
-            editableNode = nullptr;
-        }
-    }else{
-        if(ImGui::Button("Edit")){
-if (!s_Graph.isNodePtrValid(editableNode) && editable) {
-        s_toLog += "[DEBUG] Editable pointer" + std::to_string(reinterpret_cast<uintptr_t>(editableNode)) + " is NOT valid in s_Graph.nodes! Possible stale pointer!\n";
-    } else {
-        s_toLog += "[DEBUG] Editable pointer" + std::to_string(reinterpret_cast<uintptr_t>(editableNode)) + " is valid in s_Graph.nodes! (Not yet in s_Graph)\n";
-    }
-            s_Graph.debugPrintState();         
-            s_Graph.setNodeType(editableNode, type);
-            s_targetEditable = nullptr;
-            ImGui::CloseCurrentPopup();
-            winData->editableNode = false;
-            s_CopiedOnceFlag = false;
-            editableNode = nullptr;
-
-        }
-    }
+    showAddEditButton(winData, editable, editableNode, type);
 
 }
 
 static void showMultiNodeEditor(WindowData* winData){    
+
+    if(winData->allNodesSelected){
+        ImGui::Text("Reset All Nodes Types");
+        ImGui::SameLine();
+        if(ImGui::Button("Reset")){
+            s_Graph.resetNodeRoles();
+            ImGui::CloseCurrentPopup();
+            winData->multiSelectionEnabled = false;
+            winData->allNodesSelected = false;
+        }
+    }
+
+
     int _x = 0, _y = 0;
     
-    std::cout << "Difference: " << s_selectedNodes[0]->position.x << " - " << s_tempPosition.x << std::endl;
     ImGui::SeparatorText("Node Position");
     ImGui::SameLine();
     
@@ -159,7 +201,7 @@ static void showMultiNodeEditor(WindowData* winData){
         n->position = {n->position.x + _x, n->position.y + _y};
     }
 
-    s_toLog += "[DEBUG] MultiSelection Enabled!\n";
+    Logger::log("[DEBUG] MultiSelection Enabled!\n");
     
     if(ImGui::Button("Cancel")){
         Vec2 position = {s_selectedNodes[0]->position.x, s_selectedNodes[0]->position.y};
@@ -185,3 +227,6 @@ static void showMultiNodeEditor(WindowData* winData){
 
 }
 
+static void keyBindMovement(){
+
+}
