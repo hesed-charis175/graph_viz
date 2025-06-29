@@ -1,19 +1,21 @@
 void showStyleEditor(WindowData* winData){
-    if(!ImGui::Begin("Appearance Editor", &winData->showStyleEditor)){
-        ImGui::End();
-        return;
-    }
+    // if(!ImGui::Begin("Appearance Editor", &winData->showStyleEditor)){
+    //     ImGui::End();
+    //     return;
+    // }
 
     ImGui::Text("Edit appearance");
 
     if(ImGui::CollapsingHeader("Viewport")){
         ImGui::ColorEdit4("Background Color", (float*)&Config::s_viewportColor);
         ImGui::SameLine();
-        HelpMarker(
-            Strings::colorHelpMarker
-        );
+        HelpMarker(Strings::colorHelpMarker);
         ImGui::Spacing();
 
+        ImGui::Checkbox("Enable Grid", &Config::showGrids);
+        ImGui::Spacing();
+
+        ImGui::SliderFloat("Grid Spacing", &Config::gridSpacing, Config::minGridSpacing, Config::maxGridSpacing);
     }
 
     if(ImGui::CollapsingHeader("Graph")){
@@ -148,6 +150,6 @@ void showStyleEditor(WindowData* winData){
         }
     }
 
-    ImGui::End();
+    // ImGui::End();
 }
 
